@@ -11,7 +11,6 @@ public class CarControls : MonoBehaviour
 
     private Rigidbody rb;
 
-    private bool canMove;
     public bool airborne;
 
     private CameraFollow camFollow;
@@ -25,7 +24,7 @@ public class CarControls : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         camFollow = GameObject.Find("Main Camera").GetComponent<CameraFollow>();
 
-
+        // using juice? add a material
         if (CameraFollow.includeJuice)
         {
             GetComponent<Renderer>().material = mat;
@@ -34,6 +33,7 @@ public class CarControls : MonoBehaviour
 
     private void Update()
     {
+        // controls left/right rotation
         if (Mathf.Abs(Input.GetAxis("Horizontal")) > .01f)
         {
             Vector3 rotation = new Vector3(0, Input.GetAxis("Horizontal"), 0);
@@ -44,6 +44,7 @@ public class CarControls : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        // check to see if we're in the air (flying off the ramp)
         float dist = 1f;
         Vector3 dir = new Vector3(0, -1, 0);
         RaycastHit hit;
@@ -56,25 +57,24 @@ public class CarControls : MonoBehaviour
             airborne = false;
         }
 
+        // if we're not airborne, update our speed
         if (!airborne)
         {
             UpdateSpeed();
         }
 
-
+        // if we WERE airborne, but are not anymore, get ready to trigger screenshake
         if (lastAirborne == true && airborne == false)
         {
             if (CameraFollow.includeJuice)
             {
-                Debug.Log("trigger screenshake");
                 StartCoroutine(Chill());
             }
 
         }
-
-        //Debug.Log(airborne);
     }
 
+    // screenshake here looks more natural if we pause before triggering it
     IEnumerator Chill()
     {
         yield return new WaitForSeconds(.05f);
@@ -85,22 +85,13 @@ public class CarControls : MonoBehaviour
 
     void UpdateSpeed()
     {
-
+        // add forward force
         float fwd = Input.GetAxis("Vertical");
 
         if (rb.velocity.z < maxSpeed)
         {
             rb.AddForce(transform.forward * fwd * acceleration, ForceMode.Acceleration);
         }
-
         curSpeed = rb.velocity.z;
-
-        Debug.Log("current speed: " + curSpeed);
-        //rb.position = new Vector3(rb.position.x, rb.position.y, rb.position.z + curSpeed);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        //camFollow.TriggerScreenshake();
     }
 }

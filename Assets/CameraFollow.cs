@@ -5,7 +5,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 public class CameraFollow : MonoBehaviour
 {
-    public static bool includeJuice = false;
+    public static bool includeJuice = true;
 
     public GameObject car;
     public GameObject big;
@@ -44,8 +44,8 @@ public class CameraFollow : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // get all our references
         big = GameObject.Find("Big");
-        //ps = GameObject.Find("Particle System").GetComponent<BoxCollider>();
         myCam = GetComponent<Camera>();
         carControls = car.GetComponent<CarControls>();
         volume = GetComponent<PostProcessVolume>();
@@ -55,6 +55,7 @@ public class CameraFollow : MonoBehaviour
         volume.profile.TryGetSettings(out vignette);
         curLookAt = maxLookAt;
 
+        // if we're using juice, also use lens flare and shadows
         if (!includeJuice)
         {
             GameObject.Find("Sun").GetComponent<Light>().shadows = LightShadows.None;
@@ -70,6 +71,10 @@ public class CameraFollow : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        // this camera code is pretty crummy and just for showing off this one thing!
+        // making good game cameras is actually pretty hard.
+        // there's a gdc talk on all the pitfalls here: https://www.youtube.com/watch?v=C7307qRmlMI
         Vector3 point;
         float dist = Vector3.Distance(car.transform.position, big.transform.position);
 
@@ -98,64 +103,49 @@ public class CameraFollow : MonoBehaviour
             point = car.transform.position;
         }
 
+        transform.LookAt(point);
 
-
-
-
+        // are we currently shaking? if so, deduct from the screenshake time we have left
         if (isShaking && includeJuice)
         {
             curScreenShakeTime -= Time.deltaTime;
         }
-        else
-        {
-            //transform.position = car.transform.position + new Vector3(0, 0, -5);
 
-        }
-
+        // are we using juice? if so, make sure postprocessing, fog, FOV, etc. are enabled.
         if (includeJuice)
         {
             volume.enabled = true;
             RenderSettings.fog = true;
-            UpdateFOV();
-
-            //ps.enabled = true;
+            UpdateJuice();
         }
-        else
-        {
+        else {
 
             volume.enabled = false;
             RenderSettings.fog = false;
-            //ps.enabled = false;
             Vector3 newPos = car.transform.position - (car.transform.forward * 5);
             transform.position = Vector3.Lerp(transform.position, new Vector3(newPos.x, car.transform.position.y + 1, newPos.z), 0.9f);
-            //transform.position = car.transform.position + new Vector3(0, 0, -5);
         }
 
 
 
-
-        //Append the new pos to the `transform.position`.
-        //transform.position += dir * Input.GetAxis("Vertical") * mod;
-        //transform.position += Input.GetAxis("Horizontal") * transform.right * mod;
-
-        //transform.RotateAround(car.transform.position, Vector3.up, Input.GetAxis("Horizontal"));
-        transform.LookAt(point);
-
     }
 
-    void UpdateFOV()
+    void UpdateJuice()
     {
+        // the basic numbers we're working with
+        // (car min speed is assumed to be 0
         float carCurSpeed = carControls.curSpeed;
         float carMaxSpeed = carControls.maxSpeed;
 
+        // FOV
         myCam.fieldOfView = Mathf.Clamp(Remap(Mathf.Abs(carCurSpeed), 0, carMaxSpeed, minFOV, maxFOV), minFOV, maxFOV);
 
+        // new camera position and y-height
         float newHeight = Remap(Mathf.Abs(carCurSpeed), 0, carMaxSpeed, slowY, fastY);
-
         Vector3 newPos = car.transform.position - (car.transform.forward * 5);
-
         transform.position = Vector3.Lerp(transform.position, new Vector3(newPos.x, car.transform.position.y + newHeight, newPos.z), 0.9f);
 
+        // screenshake
         if (curScreenShakeTime > 0)
         {
             float curShakePrc = curScreenShakeTime / totalScreenShakeTime;
@@ -165,13 +155,11 @@ public class CameraFollow : MonoBehaviour
 
             transform.position += new Vector3(randomPoint.x, randomPoint.y, 0);
 
-        }
-        else
-        {
+        } else {
             isShaking = false;
-
         }
 
+        // postprocessing: distortion, abberation, vignette
         float distortion = Mathf.Clamp(Remap(Mathf.Abs(carCurSpeed), 0, carMaxSpeed, minDistortion, maxDistortion), maxDistortion, minDistortion);
         lensDistortion.intensity.value = distortion;
         abberation.intensity.value = Remap(Mathf.Abs(carCurSpeed), 0, carMaxSpeed, 0, 1);
@@ -193,6 +181,4 @@ public class CameraFollow : MonoBehaviour
             curScreenShakeTime = totalScreenShakeTime;
         }
     }
-
-
 }

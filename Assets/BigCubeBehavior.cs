@@ -19,6 +19,9 @@ public class BigCubeBehavior : MonoBehaviour
     void Start()
     {
         camFollow = GameObject.Find("Main Camera").GetComponent<CameraFollow>();
+
+        // sneaky: we're going to artificially speed up gravity just on this object
+        // to make it seem like it's falling faster
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
 
@@ -31,6 +34,8 @@ public class BigCubeBehavior : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // if we're still falling out of the sky,
+        // pull us downward manually
         if (rb.useGravity == false)
         {
             curFallSpeed += customGravity * Time.deltaTime;
@@ -46,13 +51,15 @@ public class BigCubeBehavior : MonoBehaviour
         {
             camFollow.TriggerScreenshake();
             hasCollided = true;
+
+            // once we've landed, turn regular gravity back on
             rb.useGravity = true;
         }
+
+        // add particle effects
         if (CameraFollow.includeJuice)
         {
             Instantiate(particlePrefab, collision.contacts[0].point, Quaternion.identity);
         }
-        
-
     }
 }
