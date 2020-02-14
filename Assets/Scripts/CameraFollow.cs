@@ -6,7 +6,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 public class CameraFollow : MonoBehaviour
 {
-    public static bool includeJuice = true;
+    public static bool includeJuice = false;
     private bool isLockedOnToBig = true;
 
     public GameObject car;
