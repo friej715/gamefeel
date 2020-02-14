@@ -49,9 +49,7 @@ public class BigCubeBehavior : MonoBehaviour
 
         if (hasCollided == false)
         {
-            camFollow.TriggerScreenshake();
             hasCollided = true;
-
             // once we've landed, turn regular gravity back on
             rb.useGravity = true;
         }
@@ -60,6 +58,7 @@ public class BigCubeBehavior : MonoBehaviour
         if (CameraFollow.includeJuice)
         {
             Instantiate(particlePrefab, collision.contacts[0].point, Quaternion.identity);
+            camFollow.TriggerScreenshake();
         }
     }
 }
